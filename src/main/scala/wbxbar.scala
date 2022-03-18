@@ -1,7 +1,7 @@
 import org.study.wb2axip.resources
 
 import chisel3._
-import chisel3.experimental.IntParam
+import chisel3.experimental.{IntParam, RawParam}
 import chisel3.util.{HasBlackBoxResource, Cat, Fill}
 
 package org.study.wb2axip {
@@ -11,48 +11,50 @@ package org.study.wb2axip {
     val NS: Int,
     val AW: Int,
     val DW: Int,
-    val SLAVE_ADDR: Bits,
-    val SLAVE_MASK: Bits,
+    val SLAVE_ADDR: Vector[Boolean],
+    val SLAVE_MASK: Vector[Boolean],
   ) extends BlackBox(
     Map(
       "NM" -> IntParam(NM),
       "NS" -> IntParam(NS),
       "AW" -> IntParam(AW),
       "DW" -> IntParam(DW),
-      "SLAVE_ADDR" -> IntParam(SLAVE_ADDR.litValue),
-      "SLAVE_MASK" -> IntParam(SLAVE_MASK.litValue),
+      "SLAVE_ADDR" -> RawParam(Wbxbar.format_bits(SLAVE_ADDR)),
+      "SLAVE_MASK" -> RawParam(Wbxbar.format_bits(SLAVE_MASK)),
     )
   ) with HasBlackBoxResource {
-    val io = IO(new Bundle {
-      val i_clk    = Input(Clock())
-      val i_reset  = Input(Bool())
-      
-      val i_mcyc   = Input(UInt(NM.W))
-      val i_mstb   = Input(UInt(NM.W))
-      val i_mwe    = Input(UInt(NM.W))
+    val io = IO(
+      new Bundle {
+        val i_clk    = Input(Clock())
+        val i_reset  = Input(Reset())
+        
+        val i_mcyc   = Input(UInt(NM.W))
+        val i_mstb   = Input(UInt(NM.W))
+        val i_mwe    = Input(UInt(NM.W))
 
-      val i_maddr  = Input(UInt((NM*AW).W))
-      val i_mdata  = Input(UInt((NM*DW).W))
-      val i_msel   = Input(UInt((NM*DW/8).W))
+        val i_maddr  = Input(UInt((NM*AW).W))
+        val i_mdata  = Input(UInt((NM*DW).W))
+        val i_msel   = Input(UInt((NM*DW/8).W))
 
-      val o_mstall = Output(UInt(NM.W))
-      val o_mack   = Output(UInt(NM.W))
-      val o_mdata  = Output(UInt((NM*DW).W))
-      val o_merr   = Output(UInt(NM.W))
+        val o_mstall = Output(UInt(NM.W))
+        val o_mack   = Output(UInt(NM.W))
+        val o_mdata  = Output(UInt((NM*DW).W))
+        val o_merr   = Output(UInt(NM.W))
 
-      val o_scyc   = Output(UInt(NS.W))
-      val o_sstb   = Output(UInt(NS.W))
-      val o_swe    = Output(UInt(NS.W))
+        val o_scyc   = Output(UInt(NS.W))
+        val o_sstb   = Output(UInt(NS.W))
+        val o_swe    = Output(UInt(NS.W))
 
-      val o_saddr  = Output(UInt((NS*AW).W))
-      val o_sdata  = Output(UInt((NS*DW).W))
-      val o_ssel   = Output(UInt((NS*DW/8).W))
+        val o_saddr  = Output(UInt((NS*AW).W))
+        val o_sdata  = Output(UInt((NS*DW).W))
+        val o_ssel   = Output(UInt((NS*DW/8).W))
 
-      val i_sstall = Input(UInt(NS.W))
-      val i_sack   = Input(UInt(NS.W))
-      val i_sdata  = Input(UInt((NS*DW).W))
-      val i_serr   = Input(UInt(NS.W))
-    })
+        val i_sstall = Input(UInt(NS.W))
+        val i_sack   = Input(UInt(NS.W))
+        val i_sdata  = Input(UInt((NS*DW).W))
+        val i_serr   = Input(UInt(NS.W))
+      }
+    )
     addResource(s"${resources.get_wb2axip_rtl_path()}/wbxbar.v")
   }
 
@@ -62,8 +64,8 @@ package org.study.wb2axip {
       NS: Int = 8,
       AW: Int = 32,
       DW: Int = 32,
-      SLAVE_ADDR: Option[Bits] = None,
-      SLAVE_MASK: Option[Bits] = None,
+      SLAVE_ADDR: Option[Vector[Boolean]] = None,
+      SLAVE_MASK: Option[Vector[Boolean]] = None,
     ) : Wbxbar = {
       new Wbxbar(
         NM, NS, AW, DW,
@@ -75,12 +77,22 @@ package org.study.wb2axip {
     def SLAVE_ADDR_default (
       NS: Int = 8,
       AW: Int = 32,
-      received_slave_addr: Option[Bits]
-    ) : Bits = {
+      received_slave_addr: Option[Vector[Boolean]]
+    ) : Vector[Boolean] = {
       received_slave_addr match {
         case Some(value) => value
         case None => {
           require(NS == 8 && AW >= 4)
+          Vector(
+            Vector(true, true, true),  Vector.fill(AW-3)(false),
+            Vector(true, true, false), Vector.fill(AW-3)(false),
+            Vector(true, false, true), Vector.fill(AW-3)(false),
+            Vector(true, false, false), Vector.fill(AW-3)(false),
+            Vector(false, true, true), Vector.fill(AW-3)(false),
+            Vector(false, false, true, false), Vector.fill(AW-4)(false),
+            Vector(false, false, false, false), Vector.fill(AW-4)(false),
+          ).flatten
+          /*
           Cat(
             "b111".U, Fill(AW-3, "b0".U),
             "b110".U, Fill(AW-3, "b0".U),
@@ -90,6 +102,7 @@ package org.study.wb2axip {
             "b0010".U, Fill(AW-4, "b0".U),
             "b0000".U, Fill(AW-4, "b0".U),
           )
+          */
         }
       }
     }
@@ -97,40 +110,38 @@ package org.study.wb2axip {
     def SLAVE_MASK_default (
       NS: Int = 8,
       AW: Int = 32,
-      received_slave_mask: Option[Bits]
-    ) : Bits = {
+      received_slave_mask: Option[Vector[Boolean]]
+    ) : Vector[Boolean] = {
       received_slave_mask match {
         case Some(value) => value
         case None => {
           require(AW >= 4)
           if (NS <= 1)
-            Fill(NS*AW, "b0".U)
+            Vector.fill(NS*AW)(false)
+            // Fill(NS*AW, "b0".U)
           else
+            (
+              Vector.fill(NS-2)(Vector.fill(3)(false) ++ Vector.fill(AW-3)(false)) ++
+              Vector.fill(2)(Vector.fill(4)(false) ++ Vector.fill(AW-4)(false))
+            ).flatten
+          /*
           Cat(
             Fill(NS-2, Cat("b111".U, Fill(AW-3, "b0".U))),
             Fill(2, Cat("b1111".U, Fill(AW-4, "b0".U))),
           )
+          */
         }
       }
     }
+
+    def format_bits(b: Vector[Boolean]): String = {
+      return "%s'b%s".format(
+        b.length,
+        b.map(bb => if (bb) "1" else "0").mkString("")
+      )
+    }
+
   }
 
 
 }
-
-/*
-parameter	NM = 4, NS=8,
-parameter	AW = 32, DW=32,
-parameter	[NS*AW-1:0]	SLAVE_ADDR = {
-    { 3'b111, {(AW-3){1'b0}} },
-    { 3'b110, {(AW-3){1'b0}} },
-    { 3'b101, {(AW-3){1'b0}} },
-    { 3'b100, {(AW-3){1'b0}} },
-    { 3'b011, {(AW-3){1'b0}} },
-    { 3'b010, {(AW-3){1'b0}} },
-    { 4'b0010, {(AW-4){1'b0}} },
-    { 4'b0000, {(AW-4){1'b0}} } },
-parameter	[NS*AW-1:0]	SLAVE_MASK = (NS <= 1) ? 0
-  : { {(NS-2){ 3'b111, {(AW-3){1'b0}} }},
-    {(2){ 4'b1111, {(AW-4){1'b0}} }} },
-*/

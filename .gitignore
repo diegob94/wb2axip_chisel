@@ -43,3 +43,9 @@ bin/
 
 # general
 *.class
+
+# Generated at root
+/*.fir
+/*.v
+/*.json
+/*.f
