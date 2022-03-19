@@ -6,6 +6,7 @@ import chisel3.util.{HasBlackBoxResource, Cat, Fill}
 
 package org.study.wb2axip {
 
+  /** Do not instance this module directly, see object Wbxbar */
   class Wbxbar(
     val NM: Int,
     val NS: Int,
@@ -59,6 +60,7 @@ package org.study.wb2axip {
   }
 
   object Wbxbar {
+    /** Use this function to instance the module. */
     def apply(
       NM: Int = 4,
       NS: Int = 8,
