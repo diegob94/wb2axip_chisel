@@ -1,7 +1,6 @@
 
 ThisBuild / scalaVersion     := "2.12.15"
 ThisBuild / version          := "0.1.0"
-ThisBuild / name             := "wb2axip_chisel"
 
 val chiselVersion = "3.5.0"
 
@@ -10,7 +9,7 @@ lazy val root = (project in file("."))
     name := "wb2axip_chisel",
     libraryDependencies ++= Seq(
       "edu.berkeley.cs" %% "chisel3" % chiselVersion,
-      "edu.berkeley.cs" %% "chiseltest" % "0.5.0" % "test"
+      "edu.berkeley.cs" %% "chiseltest" % "0.5.0" % "test",
       "org.scalatest" %% "scalatest" % "3.0.8" % Test
     ),
     scalacOptions ++= Seq(

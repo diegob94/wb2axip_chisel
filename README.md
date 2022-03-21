@@ -6,4 +6,4 @@ Attempt to wrap ZipCPU buses implementations with chisel.
 - Install sbt in your system
 - Checkout this repository
 - In the root of this repo checkout
-- Check everithing is okay executing sbt:wb2axip_chisel> test
+- Check everithing is okay executing: sbt test
