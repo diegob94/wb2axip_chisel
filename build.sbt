@@ -4,7 +4,7 @@ ThisBuild / version          := "0.1.0"
 
 val chiselVersion = "3.5.0"
 
-lazy val root = (project in file("."))
+lazy val wb2axip_chisel = (project in file("."))
   .settings(
     name := "wb2axip_chisel",
     libraryDependencies ++= Seq(
