@@ -1,4 +1,5 @@
 work/
+out/
 
 # bloop and metals
 .bloop
