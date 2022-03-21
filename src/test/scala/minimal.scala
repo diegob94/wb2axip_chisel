@@ -13,7 +13,7 @@ package org.study.wb2axip.test {
 
   class WbxbarTests extends AnyFunSuite {
     test("can generate wbxbar verilog") {
-      (new chisel3.stage.ChiselStage).emitVerilog(new WbxbarWrapper())
+      (new chisel3.stage.ChiselStage).emitVerilog(new WbxbarWrapper(), Array("--target-dir", "work"))
     }
 
   }
