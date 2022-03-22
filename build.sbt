@@ -4,9 +4,9 @@ ThisBuild / version          := "0.1.0"
 
 val chiselVersion = "3.5.0"
 
-lazy val wb2axip_chisel = (project in file("."))
+lazy val wb_chisel = (project in file("."))
   .settings(
-    name := "wb2axip_chisel",
+    name := "wb_chisel",
     libraryDependencies ++= Seq(
       "edu.berkeley.cs" %% "chisel3" % chiselVersion,
       "edu.berkeley.cs" %% "chiseltest" % "0.5.0" % "test",
