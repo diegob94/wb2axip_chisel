@@ -12,8 +12,8 @@ package org.study.wb2axip {
     val NS: Int,
     val AW: Int,
     val DW: Int,
-    val SLAVE_ADDR: Vector[Boolean],
-    val SLAVE_MASK: Vector[Boolean],
+    val SLAVE_ADDR: Vec[UInt],
+    val SLAVE_MASK: Vec[UInt],
   ) extends BlackBox(
     Map(
       "NM" -> IntParam(NM),
@@ -60,90 +60,11 @@ package org.study.wb2axip {
   }
 
   object Wbxbar {
-    /** Use this function to instance the module. */
-    def apply(
-      NM: Int = 4,
-      NS: Int = 8,
-      AW: Int = 32,
-      DW: Int = 32,
-      SLAVE_ADDR: Option[Vector[Boolean]] = None,
-      SLAVE_MASK: Option[Vector[Boolean]] = None,
-    ) : Wbxbar = {
-      new Wbxbar(
-        NM, NS, AW, DW,
-        this.SLAVE_ADDR_default(NS, AW, SLAVE_ADDR),
-        this.SLAVE_MASK_default(NS, AW, SLAVE_MASK),
+    def format_bits(b: Vec[UInt]): String = {
+      return "%s'h%s".format(
+        b.getWidth,
+        b.litValue.toString(16)
       )
     }
-
-    def SLAVE_ADDR_default (
-      NS: Int = 8,
-      AW: Int = 32,
-      received_slave_addr: Option[Vector[Boolean]]
-    ) : Vector[Boolean] = {
-      received_slave_addr match {
-        case Some(value) => value
-        case None => {
-          require(NS == 8 && AW >= 4)
-          Vector(
-            Vector(true, true, true),  Vector.fill(AW-3)(false),
-            Vector(true, true, false), Vector.fill(AW-3)(false),
-            Vector(true, false, true), Vector.fill(AW-3)(false),
-            Vector(true, false, false), Vector.fill(AW-3)(false),
-            Vector(false, true, true), Vector.fill(AW-3)(false),
-            Vector(false, false, true, false), Vector.fill(AW-4)(false),
-            Vector(false, false, false, false), Vector.fill(AW-4)(false),
-          ).flatten
-          /*
-          Cat(
-            "b111".U, Fill(AW-3, "b0".U),
-            "b110".U, Fill(AW-3, "b0".U),
-            "b101".U, Fill(AW-3, "b0".U),
-            "b100".U, Fill(AW-3, "b0".U),
-            "b011".U, Fill(AW-3, "b0".U),
-            "b0010".U, Fill(AW-4, "b0".U),
-            "b0000".U, Fill(AW-4, "b0".U),
-          )
-          */
-        }
-      }
-    }
-
-    def SLAVE_MASK_default (
-      NS: Int = 8,
-      AW: Int = 32,
-      received_slave_mask: Option[Vector[Boolean]]
-    ) : Vector[Boolean] = {
-      received_slave_mask match {
-        case Some(value) => value
-        case None => {
-          require(AW >= 4)
-          if (NS <= 1)
-            Vector.fill(NS*AW)(false)
-            // Fill(NS*AW, "b0".U)
-          else
-            (
-              Vector.fill(NS-2)(Vector.fill(3)(false) ++ Vector.fill(AW-3)(false)) ++
-              Vector.fill(2)(Vector.fill(4)(false) ++ Vector.fill(AW-4)(false))
-            ).flatten
-          /*
-          Cat(
-            Fill(NS-2, Cat("b111".U, Fill(AW-3, "b0".U))),
-            Fill(2, Cat("b1111".U, Fill(AW-4, "b0".U))),
-          )
-          */
-        }
-      }
-    }
-
-    def format_bits(b: Vector[Boolean]): String = {
-      return "%s'b%s".format(
-        b.length,
-        b.map(bb => if (bb) "1" else "0").mkString("")
-      )
-    }
-
   }
-
-
 }
