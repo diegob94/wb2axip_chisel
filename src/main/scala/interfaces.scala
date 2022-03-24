@@ -13,3 +13,16 @@ class WishboneSource(addr_width: Int, data_width: Int) extends Bundle {
   val ack = Input(Bool())
   val sel = Output(UInt(sel_width.W))
 }
+
+class WishboneSink(addr_width: Int, data_width: Int) extends Bundle {
+  val sel_width = data_width / 8
+  val adr = Input(UInt(addr_width.W))
+  val datwr = Input(UInt(data_width.W))
+  val datrd = Output(UInt(data_width.W))
+  val we = Input(Bool())
+  val cyc = Input(Bool())
+  val stb = Input(Bool())
+  val ack = Output(Bool())
+  val sel = Input(UInt(sel_width.W))
+}
+
